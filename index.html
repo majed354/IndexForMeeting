@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أرشيف مجالس القسم | قسم الدراسات القرآنية</title>
+    <meta name="description" content="أرشيف إلكتروني لمحاضر وقرارات مجالس قسم الدراسات القرآنية">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8a;
+            --primary-dark: #0f1f33;
+            --accent: #c8a45c;
+            --accent-light: #e3c77a;
+            --bg: #f8f6f3;
+            --surface: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #5a5a5a;
+            --text-muted: #8a8a8a;
+            --border: #e8e4de;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --radius: 12px;
+            --transition: all 0.25s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 32px 0;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; position: relative; }
+
+        .header-content { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+
+        .logo { display: flex; align-items: center; gap: 16px; }
+
+        .logo-icon {
+            width: 64px; height: 64px;
+            background: var(--accent);
+            border-radius: var(--radius);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: var(--shadow);
+        }
+
+        .logo-text h1 { font-family: 'Noto Kufi Arabic', sans-serif; font-size: 1.6rem; font-weight: 700; }
+        .logo-text p { opacity: 0.9; font-size: 0.95rem; margin-top: 4px; }
+
+        .header-stats { display: flex; gap: 20px; }
+
+        .stat {
+            text-align: center;
+            padding: 14px 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value { font-family: 'Noto Kufi Arabic', sans-serif; font-size: 2rem; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 0.85rem; opacity: 0.9; }
+
+        .filters-section {
+            background: var(--surface);
+            padding: 28px;
+            margin: -24px 24px 32px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        .filters-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--primary); }
+        .filters-header h2 { font-family: 'Noto Kufi Arabic', sans-serif; font-size: 1.1rem; font-weight: 600; }
+
+        .filters-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 16px; }
+
+        .filter-group { position: relative; }
+        .filter-group > i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 14px 44px 14px 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            background: var(--bg);
+            transition: var(--transition);
+        }
+
+        .filter-input:focus, .filter-select:focus { outline: none; border-color: var(--primary); background: white; }
+
+        .filter-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8a8a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 14px center;
+            padding-left: 36px;
+        }
+
+        .category-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+        .chip {
+            padding: 8px 16px;
+            background: var(--bg);
+            border: 2px solid transparent;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chip:hover { border-color: var(--primary-light); }
+        .chip.active { background: var(--primary); color: white; }
+        .chip .count { background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+        .chip.active .count { background: rgba(255,255,255,0.2); }
+
+        .main { padding: 0 24px 60px; }
+
+        .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .results-info { font-size: 1rem; color: var(--text-secondary); }
+        .results-info strong { color: var(--primary); font-family: 'Noto Kufi Arabic', sans-serif; }
+
+        .view-toggle { display: flex; background: var(--surface); border-radius: 8px; padding: 4px; box-shadow: var(--shadow); }
+        .view-btn { padding: 10px 18px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-muted); transition: var(--transition); }
+        .view-btn.active { background: var(--primary); color: white; }
+
+        .cards-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+
+        .card-top {
+            background: var(--primary);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-council { display: flex; align-items: center; gap: 12px; }
+
+        .council-badge {
+            background: var(--accent);
+            min-width: 48px; height: 48px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Noto Kufi Arabic', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 0 8px;
+        }
+
+        .council-info .label { font-size: 0.75rem; opacity: 0.85; }
+        .council-info .number { font-family: 'Noto Kufi Arabic', sans-serif; font-weight: 600; }
+        .card-date { text-align: left; font-size: 0.9rem; opacity: 0.9; }
+
+        .card-body { padding: 20px; }
+
+        .card-categories { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+        .category-tag {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 50px;
+            background: #e8f4fd;
+            color: #1565c0;
+        }
+
+        .category-tag.specific { background: #fff3e0; color: #e65100; }
+
+        .card-title {
+            font-family: 'Noto Kufi Arabic', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .year-badge { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+
+        .download-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .download-btn:hover { background: var(--primary-light); }
+        .download-btn.disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.6; }
+
+        .table-container {
+            background: var(--surface);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            display: none;
+            overflow-x: auto;
+        }
+
+        .table-container.active { display: block; }
+        .cards-container.hidden { display: none; }
+
+        .data-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+
+        .data-table th {
+            background: var(--primary);
+            color: white;
+            padding: 14px 16px;
+            text-align: right;
+            font-family: 'Noto Kufi Arabic', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .data-table tr:hover td { background: var(--bg); }
+        .table-title { max-width: 300px; font-weight: 500; }
+        .table-category { display: inline-block; font-size: 0.7rem; padding: 3px 8px; border-radius: 50px; background: #e8f4fd; color: #1565c0; margin: 2px; }
+
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+            padding: 24px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius);
+            max-width: 650px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(-10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .modal-header {
+            background: var(--primary);
+            color: white;
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .modal-title { font-family: 'Noto Kufi Arabic', sans-serif; font-size: 1.15rem; font-weight: 700; line-height: 1.6; }
+        .modal-subtitle { opacity: 0.9; margin-top: 8px; font-size: 0.9rem; }
+
+        .modal-close {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+        .modal-body { padding: 24px; }
+
+        .detail-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+        .detail-item { }
+        .detail-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .detail-value { font-weight: 500; color: var(--text); }
+        .detail-full { margin-bottom: 20px; }
+        .categories-display { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+        .modal-footer {
+            padding: 20px 24px;
+            background: var(--bg);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover { border-color: var(--primary); }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover { background: var(--primary-light); }
+
+        .loading { text-align: center; padding: 80px; color: var(--text-muted); }
+
+        .loading-spinner {
+            width: 48px; height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .empty-state { text-align: center; padding: 80px; color: var(--text-muted); }
+        .empty-state i { font-size: 4rem; opacity: 0.4; margin-bottom: 16px; display: block; }
+        .empty-state h3 { font-family: 'Noto Kufi Arabic', sans-serif; color: var(--text-secondary); margin-bottom: 8px; }
+
+        .footer { background: var(--primary-dark); color: white; padding: 32px 0; text-align: center; }
+        .footer p { opacity: 0.9; font-size: 0.9rem; }
+
+        @media (max-width: 1024px) {
+            .filters-grid { grid-template-columns: 1fr 1fr; }
+            .header-stats { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid { grid-template-columns: 1fr; }
+            .cards-container { grid-template-columns: 1fr; }
+            .header-content { justify-content: center; text-align: center; }
+            .logo { flex-direction: column; }
+            .detail-row { grid-template-columns: 1fr; }
+            .filters-section { margin: -24px 16px 24px; padding: 20px; }
+        }
+
+        .no-pdf { color: var(--text-muted); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon"><i class="fas fa-scroll"></i></div>
+                    <div class="logo-text">
+                        <h1>أرشيف مجالس القسم</h1>
+                        <p>قسم الدراسات القرآنية</p>
+                    </div>
+                </div>
+                <div class="header-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="totalItems">-</div>
+                        <div class="stat-label">موضوع</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="totalCouncils">-</div>
+                        <div class="stat-label">مجلس</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="yearsRange">-</div>
+                        <div class="stat-label">سنة</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="filters-section">
+            <div class="filters-header">
+                <i class="fas fa-filter"></i>
+                <h2>البحث والتصفية</h2>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="filter-input" id="searchInput" placeholder="ابحث في الموضوعات...">
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-calendar"></i>
+                    <select class="filter-select" id="filterYear"><option value="">جميع السنوات</option></select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-gavel"></i>
+                    <select class="filter-select" id="filterCouncil"><option value="">جميع المجالس</option></select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-tag"></i>
+                    <select class="filter-select" id="filterSpecific"><option value="">جميع التصنيفات</option></select>
+                </div>
+            </div>
+            <div class="category-chips" id="categoryChips"></div>
+        </section>
+    </div>
+
+    <main class="main">
+        <div class="container">
+            <div class="content-header">
+                <div class="results-info">عرض <strong id="resultsCount">0</strong> نتيجة</div>
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="cards" title="بطاقات"><i class="fas fa-th-large"></i></button>
+                    <button class="view-btn" data-view="table" title="جدول"><i class="fas fa-list"></i></button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>جاري تحميل البيانات...</p>
+            </div>
+
+            <div class="cards-container" id="cardsContainer"></div>
+
+            <div class="table-container" id="tableContainer">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>السنة</th>
+                            <th>الشهر</th>
+                            <th>المجلس</th>
+                            <th>الموضوع</th>
+                            <th>التصنيف المحدد</th>
+                            <th>تنزيل</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <h3>لا توجد نتائج</h3>
+                <p>جرّب تغيير معايير البحث</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="modalTitle">تفاصيل الموضوع</div>
+                    <div class="modal-subtitle" id="modalSubtitle"></div>
+                </div>
+                <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-row">
+                    <div class="detail-item">
+                        <div class="detail-label"><i class="fas fa-calendar-alt"></i> السنة الهجرية</div>
+                        <div class="detail-value" id="modalYear">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label"><i class="fas fa-moon"></i> الشهر الهجري</div>
+                        <div class="detail-value" id="modalMonth">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label"><i class="fas fa-gavel"></i> رقم المجلس</div>
+                        <div class="detail-value" id="modalCouncil">-</div>
+                    </div>
+                </div>
+                <div class="detail-full">
+                    <div class="detail-label"><i class="fas fa-heading"></i> الموضوع</div>
+                    <div class="detail-value" id="modalTopic" style="font-size: 1.05rem; line-height: 1.8;">-</div>
+                </div>
+                <div class="detail-full">
+                    <div class="detail-label"><i class="fas fa-folder"></i> التصنيف العام</div>
+                    <div class="categories-display" id="modalGeneral"></div>
+                </div>
+                <div class="detail-full">
+                    <div class="detail-label"><i class="fas fa-tag"></i> التصنيف المحدد</div>
+                    <div class="detail-value" id="modalSpecific">-</div>
+                </div>
+                <div class="detail-full">
+                    <div class="detail-label"><i class="fas fa-file-pdf"></i> ملف المحضر</div>
+                    <div class="detail-value" id="modalPdfName">-</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">إغلاق</button>
+                <a href="#" class="btn-primary" id="modalDownload" target="_blank">
+                    <i class="fas fa-download"></i>
+                    تنزيل المحضر
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p><i class="fas fa-copyright"></i> جميع الحقوق محفوظة - قسم الدراسات القرآنية © <span id="year"></span></p>
+        </div>
+    </footer>
+
+    <script>
+        let allData = [];
+        let filtered = [];
+
+        const hijriMonths = ['', 'محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'];
+
+        // توليد اسم ملف PDF من السنة والشهر والمجلس
+        function generatePdfName(year, month, council) {
+            const y = String(year).slice(-2).padStart(2, '0');
+            const m = String(month).padStart(2, '0');
+            const c = String(council).padStart(2, '0');
+            return `${y}${m}-${c}.pdf`;
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch('data/councils.csv');
+                const csv = await res.text();
+                
+                Papa.parse(csv, {
+                    delimiter: ';',
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        // تنظيف وتحويل البيانات
+                        allData = results.data
+                            .filter(row => row['السنة الهجرية'] && row['السنة الهجرية'].trim())
+                            .map((row, i) => {
+                                const year = row['السنة الهجرية']?.trim();
+                                const month = row['الشهر الهجري']?.trim();
+                                const council = row['رقم المجلس']?.trim();
+                                
+                                return {
+                                    id: i,
+                                    year: year,
+                                    month: month,
+                                    month_name: hijriMonths[parseInt(month)] || month,
+                                    council: council,
+                                    topic: row['الموضوع (مختصر)']?.trim() || '',
+                                    general: row['التصنيف العام']?.trim() || '',
+                                    specific: row['التصنيف المحدد']?.trim() || '',
+                                    pdf: generatePdfName(year, month, council)
+                                };
+                            });
+                        
+                        filtered = [...allData];
+                        initFilters();
+                        updateStats();
+                        render();
+                        document.getElementById('loading').style.display = 'none';
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = '<i class="fas fa-exclamation-triangle" style="font-size:3rem;color:#c62828;display:block;margin-bottom:16px;"></i><p>خطأ في تحميل البيانات</p>';
+            }
+        }
+
+        function initFilters() {
+            // السنوات
+            const years = [...new Set(allData.map(d => d.year))].filter(y => y).sort((a,b) => b-a);
+            const yearSelect = document.getElementById('filterYear');
+            years.forEach(y => { yearSelect.innerHTML += `<option value="${y}">${y} هـ</option>`; });
+            
+            // المجالس
+            const councils = [...new Set(allData.map(d => d.council))].filter(c => c).sort((a,b) => parseInt(a)-parseInt(b));
+            const councilSelect = document.getElementById('filterCouncil');
+            councils.forEach(c => { councilSelect.innerHTML += `<option value="${c}">مجلس ${c}</option>`; });
+            
+            // التصنيفات المحددة
+            const specifics = [...new Set(allData.map(d => d.specific))].filter(s => s).sort();
+            const specificSelect = document.getElementById('filterSpecific');
+            specifics.forEach(s => { specificSelect.innerHTML += `<option value="${s}">${s}</option>`; });
+            
+            // شرائح التصنيف العام
+            const generalCats = {};
+            allData.forEach(d => {
+                if (d.general) {
+                    d.general.split(/[،,]/).forEach(c => {
+                        const cat = c.trim();
+                        if (cat) generalCats[cat] = (generalCats[cat] || 0) + 1;
+                    });
+                }
+            });
+            
+            let chipsHtml = `<div class="chip active" data-cat="">الكل <span class="count">${allData.length}</span></div>`;
+            Object.entries(generalCats).sort((a,b) => b[1]-a[1]).forEach(([cat, count]) => {
+                chipsHtml += `<div class="chip" data-cat="${cat}">${cat} <span class="count">${count}</span></div>`;
+            });
+            document.getElementById('categoryChips').innerHTML = chipsHtml;
+            
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    applyFilters();
+                });
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('totalItems').textContent = allData.length;
+            document.getElementById('totalCouncils').textContent = [...new Set(allData.map(d => d.council))].filter(c => c).length;
+            
+            const years = allData.map(d => parseInt(d.year)).filter(y => !isNaN(y));
+            if (years.length) {
+                const min = Math.min(...years);
+                const max = Math.max(...years);
+                document.getElementById('yearsRange').textContent = min === max ? min : `${max}-${min}`;
+            }
+            
+            document.getElementById('year').textContent = new Date().getFullYear();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const year = document.getElementById('filterYear').value;
+            const council = document.getElementById('filterCouncil').value;
+            const specific = document.getElementById('filterSpecific').value;
+            const activeCat = document.querySelector('.chip.active')?.dataset.cat || '';
+            
+            filtered = allData.filter(d => {
+                const searchMatch = !search || 
+                    d.topic?.toLowerCase().includes(search) ||
+                    d.general?.toLowerCase().includes(search) ||
+                    d.specific?.toLowerCase().includes(search);
+                
+                const yearMatch = !year || d.year === year;
+                const councilMatch = !council || d.council === council;
+                const specificMatch = !specific || d.specific === specific;
+                const catMatch = !activeCat || (d.general && d.general.includes(activeCat));
+                
+                return searchMatch && yearMatch && councilMatch && specificMatch && catMatch;
+            });
+            
+            render();
+        }
+
+        function render() {
+            const cards = document.getElementById('cardsContainer');
+            const tbody = document.getElementById('tableBody');
+            const empty = document.getElementById('emptyState');
+            
+            document.getElementById('resultsCount').textContent = filtered.length;
+            
+            if (!filtered.length) {
+                cards.innerHTML = '';
+                tbody.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            
+            // البطاقات
+            cards.innerHTML = filtered.map(d => `
+                <div class="card" onclick="openModal(${d.id})">
+                    <div class="card-top">
+                        <div class="card-council">
+                            <div class="council-badge">${d.council}</div>
+                            <div class="council-info">
+                                <div class="label">مجلس رقم</div>
+                                <div class="number">${d.council}</div>
+                            </div>
+                        </div>
+                        <div class="card-date">${d.month_name} ${d.year}هـ</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-categories">
+                            ${d.general ? d.general.split(/[،,]/).slice(0,2).map(c => `<span class="category-tag">${c.trim()}</span>`).join('') : ''}
+                            ${d.specific ? `<span class="category-tag specific">${d.specific}</span>` : ''}
+                        </div>
+                        <h3 class="card-title">${d.topic || 'بدون عنوان'}</h3>
+                        <div class="card-footer">
+                            <span class="year-badge"><i class="fas fa-calendar-alt"></i> ${d.year} هـ</span>
+                            <a href="pdfs/${d.pdf}" class="download-btn" onclick="event.stopPropagation()" target="_blank">
+                                <i class="fas fa-download"></i> تنزيل
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // الجدول
+            tbody.innerHTML = filtered.map(d => `
+                <tr onclick="openModal(${d.id})" style="cursor:pointer">
+                    <td><strong>${d.year}</strong></td>
+                    <td>${d.month_name}</td>
+                    <td>${d.council}</td>
+                    <td class="table-title">${d.topic}</td>
+                    <td>${d.specific ? `<span class="table-category">${d.specific}</span>` : '-'}</td>
+                    <td>
+                        <a href="pdfs/${d.pdf}" class="download-btn" onclick="event.stopPropagation()" target="_blank" style="padding:8px 14px;font-size:0.8rem">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openModal(id) {
+            const d = allData.find(x => x.id === id);
+            if (!d) return;
+            
+            document.getElementById('modalTitle').textContent = d.topic;
+            document.getElementById('modalSubtitle').textContent = `مجلس رقم ${d.council} - ${d.month_name} ${d.year}هـ`;
+            document.getElementById('modalYear').textContent = d.year + ' هـ';
+            document.getElementById('modalMonth').textContent = d.month_name;
+            document.getElementById('modalCouncil').textContent = d.council;
+            document.getElementById('modalTopic').textContent = d.topic;
+            document.getElementById('modalSpecific').textContent = d.specific || '-';
+            document.getElementById('modalPdfName').textContent = d.pdf;
+            
+            const genContainer = document.getElementById('modalGeneral');
+            if (d.general) {
+                genContainer.innerHTML = d.general.split(/[،,]/).map(c => `<span class="category-tag">${c.trim()}</span>`).join('');
+            } else {
+                genContainer.innerHTML = '<span>-</span>';
+            }
+            
+            const dl = document.getElementById('modalDownload');
+            dl.href = `pdfs/${d.pdf}`;
+            
+            document.getElementById('modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function toggleView(view) {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+            document.getElementById('cardsContainer').classList.toggle('hidden', view === 'table');
+            document.getElementById('tableContainer').classList.toggle('active', view === 'table');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadData);
+        document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
+        document.getElementById('filterYear').addEventListener('change', applyFilters);
+        document.getElementById('filterCouncil').addEventListener('change', applyFilters);
+        document.getElementById('filterSpecific').addEventListener('change', applyFilters);
+        document.querySelectorAll('.view-btn').forEach(b => { b.addEventListener('click', () => toggleView(b.dataset.view)); });
+        document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+        function debounce(fn, ms) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }; }
+    </script>
+</body>
+</html>
